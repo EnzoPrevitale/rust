@@ -1,4 +1,4 @@
-use std::{error, io::{self, Write}};
+use std::{io::{self, Write}};
 
 struct ContaBancaria {
     titular: String,
