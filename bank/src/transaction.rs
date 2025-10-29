@@ -2,9 +2,19 @@ use rusqlite::{Connection, Result};
 use crate::client::Client;
 
 pub enum Operation {
-    Deposit(f64),
-    Withdraw(f64),
-    Transfer(f64),       
+    Deposit,
+    Withdraw,
+    Transfer,       
+}
+
+impl Operation {
+    fn to_str(&self) -> &str {
+        match self {
+            Operation::Deposit => "Deposit",
+            Operation::Withdraw => "Withdraw",
+            Operation::Transfer => "Transfer",
+        }
+    }
 }
 
 pub struct Transaction<'a> {
@@ -20,13 +30,13 @@ impl<'a> Transaction<'a> {
                 destination: &'a mut Client<'a>,
                 value: f64,
                 operation: Operation,
-                conn: &'a Connection) -> Result<Transaction<'a>> {
+                conn: &'a mut Connection) -> Result<Transaction<'a>> {
 
         conn.execute(
     r#"INSERT INTO "transaction"(origin_id, destination_id, value, operation)
             VALUES (?, ?, ?, ?);
         "#,
-        [origin.id, destination.id, value, operation]
+        (origin.id, destination.id, value, operation.to_str())
     )?;
 
         Ok(Transaction{origin_client: origin,
@@ -36,21 +46,38 @@ impl<'a> Transaction<'a> {
                     conn: conn})
     }
 
-    pub fn deposit(&self) {
+    fn deposit(&self) -> Result<()> {
         self.conn.execute(r#"
         UPDATE client
         SET balance = balance + ?
         WHERE id = ?
-        "#, [self.value, self.origin_client.id])?;
+        "#, (self.value, self.origin_client.id))?;
+
+        Ok(())
     }
 
-    pub fn withdraw(&self) {
+    fn withdraw(&self) -> Result<()> {
         self.conn.execute(r#"
         UPDATE client
         SET balance = balance - ?
         WHERE id = ?
-        "#, [self.value, self.origin_client.id])?;
+        "#, (self.value, self.origin_client.id))?;
+
+        Ok(())
     }
 
-    pub fn 
+    fn transfer(&self) -> Result<()> {
+        self.conn.execute(r#"
+        UPDATE client
+        SET balance = balance - ?
+        WHERE id = ?;
+
+        UPDATE client
+        SET balance = balance + ?
+        WHERE id = ?;
+        "#,
+        (self.value, self.origin_client.id, self.value, self.destination_client.id))?;
+
+        Ok(())
+    }
 }

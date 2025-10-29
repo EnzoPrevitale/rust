@@ -11,7 +11,7 @@ pub struct Client<'a> {
 }
 
 impl<'a> Client<'a> {
-    pub fn new(name: &str, password: &str, conn: &'a Connection) -> Client {
+    pub fn new(name: &'a str, password: &'a str, conn: &'a mut Connection) -> Result<Client<'a>> {
         conn.execute(r#"
         INSERT INTO client(name, password)
         VALUES (?, ?);
@@ -24,7 +24,7 @@ impl<'a> Client<'a> {
         |row| row.get(0)
     )?;
 
-        Client {id, name, password, balance: 0.0, creation_date: SystemTime::now(), conn:conn }
+        Ok(Client {id, name, password, balance: 0.0, creation_date: SystemTime::now(), conn: conn })
     }
 
     pub fn deposit(&mut self, value: f64) {
