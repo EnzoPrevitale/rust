@@ -12,7 +12,7 @@ pub struct Transaction<'a> {
     destination_client: &'a mut Client<'a>,
     value: f64, 
     operation: Operation,
-    conn: &'a Connection,
+    conn: &'a mut Connection,
 }
 
 impl<'a> Transaction<'a> {
@@ -25,7 +25,9 @@ impl<'a> Transaction<'a> {
         conn.execute(
     r#"INSERT INTO "transaction"(origin_id, destination_id, value, operation)
             VALUES (?, ?, ?, ?);
-        "#, [])?;
+        "#,
+        [origin.id, destination.id, value, operation]
+    )?;
 
         Ok(Transaction{origin_client: origin,
                     destination_client: destination,
@@ -33,4 +35,22 @@ impl<'a> Transaction<'a> {
                     operation: operation,
                     conn: conn})
     }
+
+    pub fn deposit(&self) {
+        self.conn.execute(r#"
+        UPDATE client
+        SET balance = balance + ?
+        WHERE id = ?
+        "#, [self.value, self.origin_client.id])?;
+    }
+
+    pub fn withdraw(&self) {
+        self.conn.execute(r#"
+        UPDATE client
+        SET balance = balance - ?
+        WHERE id = ?
+        "#, [self.value, self.origin_client.id])?;
+    }
+
+    pub fn 
 }
