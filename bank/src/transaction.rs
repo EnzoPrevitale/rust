@@ -1,5 +1,4 @@
 use rusqlite::{Connection, Result};
-
 use crate::client::Client;
 
 pub enum Operation {
