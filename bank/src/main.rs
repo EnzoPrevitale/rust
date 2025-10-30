@@ -1,4 +1,4 @@
-use std::{io::{self, Write}, time::SystemTime};
+use std::{clone, io::{self, Write}};
 use rusqlite::{Connection, Result};
 
 mod client;
@@ -10,14 +10,15 @@ fn create_tables(conn: &Connection) -> Result<()>{
     conn.execute(r#"CREATE TABLE IF NOT EXISTS client (
         id INTEGER PRIMARY KEY,
         name VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
         balance REAL NOT NULL DEFAULT 0,
-        creation_date DATETIME DEFAULT NOW()
+        creation_date DATETIME DEFAULT CURRENT_TIMESTAMP
     );"#, [])?;
 
     conn.execute(r#"CREATE TABLE IF NOT EXISTS "transaction" (
         id INTEGER PRIMARY KEY,
         origin_id INTEGER NOT NULL,
-        destination_id INTEGER NOT NULL,
+        destination_id INTEGER,
         value REAL,
         operation VARCHAR(10),
 
@@ -28,8 +29,8 @@ fn create_tables(conn: &Connection) -> Result<()>{
     Ok(())
 }
 
-pub fn input(content: &str) -> &str {
-    print!(content);
+pub fn input(content: &str) -> String {
+    print!("{}", content);
     
     io::stdout().flush().unwrap();
 
@@ -37,40 +38,60 @@ pub fn input(content: &str) -> &str {
 
     io::stdin().read_line(&mut text).expect("Input error.");
 
-    &text
+    text
+}
+
+pub fn float(value: String) -> f64 {
+    let value: f64 = value.parse().expect("Type error.");
+    value
 }
 
 fn main() -> Result<()> {
-    let conn = Connection::open("database.db")?;
+    let mut conn = Connection::open("database.db")?;
 
     create_tables(&conn)?;
 
     loop {
+        let mut client: Client;
+
         println!("-=-=-=- BANCO -=-=-=-");
         println!("[1] Fazer login");
         println!("[2] Fazer cadastro");
         println!("[3] Sair");
 
-        let option: &str = input("Escolha: ");
+        
+        let option: String = input("Escolha: ");
+        let option: &str = option.trim();
 
         if option == "1" {
             loop {
+                let name: String = input("Nome de usuário: ");
+                let password: String = input("Senha: ");
+
+                client = Client::auth(name.trim(), password.trim(), &mut conn)?;
+
                 println!("[1] Deposit");
                 println!("[2] Withdraw");
                 println!("[3] Transfer");
                 println!("[4] Exit");
 
-                let option: &str = input("Escolha: ");
+                let option: String = input("Escolha: ");
+                let option: &str = option.trim();
 
                 if option == "1" {
-                    let name: &str = input("Digite o nome: ");
+                    let value = float(input("Digite o valor ser depositado: "));
+                    let o_client = &mut client;
+                    let transaction: Transaction = Transaction::new(o_client, , value, transaction::Operation::Deposit, &mut conn)?;
                 }
             }
         } else if option == "2" {
-            let name: &str = input("Nome: ");
-            let password: &str = input("Senha");
+            let name: String = input("Nome: ");
+            let password: String = input("Senha: ");
 
-            let client: Client = Client::new(name, password, &mut conn);
+            client = Client::new(name.trim(), password.trim(), &mut conn)?;
+        } else {
+            print!("Break");
+            break;
         }
     }
 
