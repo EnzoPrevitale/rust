@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use rusqlite::{Connection, Result};
 
-fn query_client(name: &str, password: &str, conn: & mut Connection) -> Result<(i32, f64)> {
+fn query_client(name: &str, password: &str, conn: &Connection) -> Result<(i32, f64)> {
     let id: i32 = conn.query_row(r#"
     SELECT * FROM client
     WHERE name = ?
@@ -31,15 +31,17 @@ pub struct Client<'a> {
     password: &'a str,
     pub balance: f64,
     creation_date: SystemTime,
-    conn: &'a mut Connection,
+    conn: &'a Connection,
 }
 
 impl<'a> Client<'a> {
-    pub fn new(name: &'a str, password: &'a str, conn: &'a mut Connection) -> Result<Client<'a>> {
-        conn.execute(r#"
-        INSERT INTO client(name, password)
-        VALUES (?, ?);
-        "#, [name, password])?;
+    pub fn new(name: &'a str, password: &'a str, conn: &'a Connection, save: bool) -> Result<Client<'a>> {
+        if save {
+            conn.execute(r#"
+            INSERT INTO client(name, password)
+            VALUES (?, ?);
+            "#, [name, password])?;
+        }
 
         let id: i32 = conn.query_row(r#"
         SELECT MAX(id) FROM client;
@@ -52,18 +54,13 @@ impl<'a> Client<'a> {
     }
 
 
-    pub fn auth(name: &'a str, password: &'a str, conn: &'a mut Connection) -> Result<Client<'a>> {
+    pub fn auth(name: &'a str, password: &'a str, conn: &'a Connection) -> Result<Client<'a>> {
         let data:(i32, f64) = query_client(name, password, conn)?;
 
         let id: i32 = data.0;
         let balance: f64 = data.1;
 
         Ok(Client {id: id, name, password, balance: balance, creation_date: SystemTime::now(), conn})
-    }
-
-    
-    pub fn dummy(conn: &'a mut Connection) -> Client<'a> {
-        Client{id: 0, name: "dummy", password: "aaa", balance: 0.0, creation_date: SystemTime::now(), conn }
     }
 
     pub fn deposit(&mut self, value: f64) {

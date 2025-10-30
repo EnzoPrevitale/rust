@@ -54,59 +54,31 @@ impl Operation {
 
 pub struct Transaction<'a> {
     origin_client: &'a mut Client<'a>,
-    destination_client: &'a mut Client<'a>,
+    destination_client: Option<&'a mut Client<'a>>,
     value: f64, 
     operation: Operation,
-    conn: &'a mut Connection,
+    conn: &'a Connection,
 }
 
 impl<'a> Transaction<'a> {
     pub fn new(origin: &'a mut Client<'a>,
-                destination: &'a mut Client<'a>,
+                destination: Option<&'a mut Client<'a>>,
                 value: f64,
                 operation: Operation,
-                conn: &'a mut Connection) -> Result<Transaction<'a>> {
+                conn: &'a Connection) -> Result<Transaction<'a>> {  
 
+                    
         conn.execute(
     r#"INSERT INTO "transaction"(origin_id, destination_id, value, operation)
             VALUES (?, ?, ?, ?);
         "#,
-        
 
-        (origin.id, destination.id, value, operation.to_str())
+        (origin.id, destination.as_ref().map_or(None, |d| Some(d.id)), value, operation.to_str())
     )?;
+
 
     Ok(Transaction{origin_client: origin,
                         destination_client: destination,
-                        value: value,
-                        operation: operation,
-                        conn: conn})
-    }
-
-    pub fn new_dw(origin: &'a mut Client<'a>,
-                value: f64,
-                operation: Operation,
-                conn: &'a mut Connection) -> Result<Transaction<'a>> {
-
-        conn.execute(
-    r#"INSERT INTO "transaction"(origin_id, destination_id, value, operation)
-            VALUES (?, ?, ?, ?);
-        "#,
-        
-
-        (origin.id, origin.id, value, operation.to_str())
-        )?;
-
-        match operation {
-            Operation::Deposit => deposit(value, origin.id, conn)?,
-            Operation::Withdraw => withdraw(value, origin.id, conn)?,
-            Operation::Transfer => panic!("Unexpected type 'Transfer'"),
-        }
-
-        let mut dummy: Client<'f> = Client::dummy(conn);
-
-        Ok(Transaction{origin_client: origin,
-                        destination_client: &mut dummy,
                         value: value,
                         operation: operation,
                         conn: conn})

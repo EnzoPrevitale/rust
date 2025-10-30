@@ -42,6 +42,7 @@ pub fn input(content: &str) -> String {
 }
 
 pub fn float(value: String) -> f64 {
+    let value: &str = value.trim();
     let value: f64 = value.parse().expect("Type error.");
     value
 }
@@ -68,7 +69,7 @@ fn main() -> Result<()> {
                 let name: String = input("Nome de usuário: ");
                 let password: String = input("Senha: ");
 
-                client = Client::auth(name.trim(), password.trim(), &mut conn)?;
+                client = Client::auth(name.trim(), password.trim(), &conn)?;
 
                 println!("[1] Deposit");
                 println!("[2] Withdraw");
@@ -80,15 +81,14 @@ fn main() -> Result<()> {
 
                 if option == "1" {
                     let value = float(input("Digite o valor ser depositado: "));
-                    let o_client = &mut client;
-                    let transaction: Transaction = Transaction::new(o_client, , value, transaction::Operation::Deposit, &mut conn)?;
+                    let transaction: Transaction = Transaction::new(&mut client, None , value, transaction::Operation::Deposit, &conn)?;
                 }
             }
         } else if option == "2" {
             let name: String = input("Nome: ");
             let password: String = input("Senha: ");
 
-            client = Client::new(name.trim(), password.trim(), &mut conn)?;
+            client = Client::new(name.trim(), password.trim(), &mut conn, true)?;
         } else {
             print!("Break");
             break;
