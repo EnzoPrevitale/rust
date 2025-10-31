@@ -22,8 +22,8 @@ fn query_client(name: &str, password: &str, conn: &Connection) -> Result<(i32, f
 
         
 
-        Ok((id, balance))
-    }
+    Ok((id, balance))
+}
 
 pub struct Client<'a> {
     pub id: i32,
@@ -63,8 +63,9 @@ impl<'a> Client<'a> {
         Ok(Client {id: id, name, password, balance: balance, creation_date: SystemTime::now(), conn})
     }
 
-    pub fn deposit(&mut self, value: f64) {
-        self.balance += value;
-        println!("R${} depositados na conta de {}. Saldo: {}.", value, self.name, self.balance);
+    pub fn search_client(name: &str, conn: &Connection) -> Result<Client<'a>> {
+        
+
+        Ok(Client { id: (), name, password: (), balance: (), creation_date: (), conn })
     }
 }

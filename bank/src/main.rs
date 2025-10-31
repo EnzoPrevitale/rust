@@ -69,24 +69,32 @@ fn main() -> Result<()> {
                 let name: String = input("Nome de usuário: ");
                 let password: String = input("Senha: ");
 
-                client = Client::auth(name.trim(), password.trim(), &conn)?;
+                loop {
+                    client = Client::auth(name.trim(), password.trim(), &conn)?;
+                    
+                    println!("[1] Deposit");
+                    println!("[2] Withdraw");
+                    println!("[3] Transfer");
+                    println!("[4] Exit");
 
-                println!("[1] Deposit");
-                println!("[2] Withdraw");
-                println!("[3] Transfer");
-                println!("[4] Exit");
+                    let option: String = input("Escolha: ");
+                    let option: &str = option.trim();
 
-                let option: String = input("Escolha: ");
-                let option: &str = option.trim();
-
-                if option == "1" {
-                    let value = float(input("Digite o valor ser depositado: "));
-                    let transaction: Transaction = Transaction::new(&mut client, None , value, transaction::Operation::Deposit, &conn)?;
+                    if option == "1" {
+                        let value: f64 = float(input("Type the value to be deposited: "));
+                        let _transaction: Transaction = Transaction::new(&mut client, None , value, transaction::Operation::Deposit, &conn)?;
+                    } else if option == "2" {
+                        let value: f64 = float(input("Type the value to be withdrawn: "));
+                        let _transaction: Transaction = Transaction::new(&mut client, None, value, transaction::Operation::Withdraw, &conn)?;
+                    } else if (option == "3") {
+                        let destination_name: &str = input("Type the name of the destinatary: ").trim();
+                        
+                    }
                 }
             }
         } else if option == "2" {
-            let name: String = input("Nome: ");
-            let password: String = input("Senha: ");
+            let name: String = input("Name: ");
+            let password: String = input("Password: ");
 
             client = Client::new(name.trim(), password.trim(), &mut conn, true)?;
         } else {

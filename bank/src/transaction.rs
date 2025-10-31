@@ -1,7 +1,8 @@
 use rusqlite::{Connection, Result};
 use crate::client::Client;
 
-fn deposit(value: f64, origin_client: i32, conn: &mut Connection) -> Result<()> {
+fn deposit(value: f64, origin_client: i32, conn: &Connection) -> Result<()> {
+    println!("Depósito");
     conn.execute(r#"
     UPDATE client
     SET balance = balance + ?
@@ -11,7 +12,7 @@ fn deposit(value: f64, origin_client: i32, conn: &mut Connection) -> Result<()> 
     Ok(())
     }
 
-fn withdraw(value: f64, origin_client: i32, conn: &mut Connection) -> Result<()> {
+fn withdraw(value: f64, origin_client: i32, conn: &Connection) -> Result<()> {
     conn.execute(r#"
     UPDATE client
     SET balance = balance - ?
@@ -21,7 +22,7 @@ fn withdraw(value: f64, origin_client: i32, conn: &mut Connection) -> Result<()>
     Ok(())
     }
 
-fn transfer(value: f64, origin_client: i32, destination_client: i32, conn: &mut Connection) -> Result<()> {
+fn transfer(value: f64, origin_client: i32, destination_client: i32, conn: &Connection) -> Result<()> {
     conn.execute(r#"
     UPDATE client
     SET balance = balance - ?
@@ -75,6 +76,12 @@ impl<'a> Transaction<'a> {
 
         (origin.id, destination.as_ref().map_or(None, |d| Some(d.id)), value, operation.to_str())
     )?;
+
+    match operation {
+        Operation::Deposit => deposit(value, origin.id, conn)?,
+        Operation::Withdraw => withdraw(value, origin.id, conn)?,
+        Operation::Transfer => transfer(value, origin.id, destination.as_ref().map_or(origin.id, |d| d.id), conn)?
+    }
 
 
     Ok(Transaction{origin_client: origin,
